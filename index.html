@@ -9,6 +9,7 @@
 <!-- Excel / CSV -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <!-- Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -1289,10 +1290,97 @@ td{
 [dir="rtl"] .formulaResult{unicode-bidi:plaintext}
 @media(max-width:750px){[dir="rtl"] .filterStatus{margin-right:0}}
 
+
+
+/* =========================
+   FOUDEX SECURE ACCESS + FILE LOADING
+========================= */
+#cyberAccessOverlay{
+    display:none;position:fixed;inset:0;z-index:999999;
+    background:rgba(2,7,15,.62);backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;
+}
+#cyberAccessOverlay.active{display:flex;animation:cyberOverlayIn .25s ease forwards}
+.cyber-access-box{
+    width:min(500px,94vw);position:relative;padding:28px 26px 24px;
+    border:1px solid rgba(35,136,255,.45);border-radius:20px;
+    background:linear-gradient(145deg,rgba(12,25,45,.97),rgba(5,12,25,.99));
+    box-shadow:0 0 35px rgba(35,136,255,.18),0 25px 80px rgba(0,0,0,.55),inset 0 0 35px rgba(25,211,255,.035);
+    text-align:center;overflow:hidden;animation:cyberBoxIn .4s cubic-bezier(.2,.8,.2,1)
+}
+.cyber-access-box:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 30%,rgba(25,211,255,.045),transparent 70%);animation:cyberScan 4s linear infinite}
+.cyber-shield-wrap{width:70px;height:72px;margin:0 auto 10px;position:relative;display:grid;place-items:center;color:var(--cyan);filter:drop-shadow(0 0 10px rgba(25,211,255,.7)) drop-shadow(0 0 22px rgba(35,136,255,.3))}
+.cyber-shield-wrap svg{width:54px;height:62px;position:relative;z-index:2}
+.cyber-orbit{position:absolute;width:64px;height:64px;border:1px solid rgba(25,211,255,.48);border-right-color:transparent;border-bottom-color:rgba(35,136,255,.2);border-radius:50%;animation:cyberOrbit 2.2s linear infinite}
+.cyber-orbit:after{content:"";position:absolute;top:-3px;left:50%;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);transform:translateX(-50%)}
+.cyber-access-title{position:relative;margin-bottom:6px;font-size:20px;font-weight:800;letter-spacing:1.6px;color:var(--white)}
+.cyber-access-subtitle{position:relative;margin-bottom:16px;font-size:12px;color:var(--cyan);letter-spacing:.8px}
+.cyber-file-name{position:relative;margin-bottom:15px;padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--white);font-size:12px;word-break:break-word}
+.cyber-instruction{position:relative;margin-bottom:10px;color:var(--muted);font-size:12px;line-height:1.55}
+.cyber-password-wrap{position:relative;display:flex;align-items:center;height:48px;margin-bottom:7px;border:1px solid rgba(35,136,255,.35);border-radius:11px;background:rgba(3,9,19,.72);transition:.25s}
+.cyber-password-wrap:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(25,211,255,.08),0 0 22px rgba(25,211,255,.12)}
+.cyber-key-icon{width:44px;color:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cyber-key-icon svg{width:20px;height:20px}
+#cyberPasswordInput{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:var(--white);font-size:14px;letter-spacing:2px}
+#cyberPasswordInput::placeholder{color:var(--muted);letter-spacing:0}
+.cyber-eye-btn{width:44px;height:100%;border:0;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.cyber-eye-btn:hover{color:var(--cyan)}
+.cyber-eye-btn svg{width:19px;height:19px}
+.cyber-error{min-height:18px;margin-bottom:3px;color:var(--red);font-size:11px;opacity:0;transition:.2s}.cyber-error.show{opacity:1}
+.cyber-actions{position:relative;display:flex;justify-content:center;align-items:center;gap:9px;margin-top:6px}
+.cyber-unlock-btn,.cyber-cancel-btn{height:42px;border-radius:9px;padding:0 17px;font-size:12px;font-weight:700;cursor:pointer;transition:.25s}
+.cyber-unlock-btn{border:1px solid rgba(35,136,255,.65);color:#fff;background:linear-gradient(135deg,rgba(35,136,255,.95),rgba(25,211,255,.78));box-shadow:0 0 18px rgba(35,136,255,.18)}
+.cyber-unlock-btn:hover{transform:translateY(-2px);box-shadow:0 0 25px rgba(25,211,255,.3),0 8px 25px rgba(0,0,0,.25)}
+.cyber-cancel-btn{border:1px solid rgba(255,255,255,.12);color:var(--muted);background:rgba(255,255,255,.035)}
+.cyber-cancel-btn:hover{color:var(--white);border-color:rgba(255,255,255,.25)}
+.cyber-unlock-icon{display:inline-flex;vertical-align:middle;margin-right:5px}.cyber-unlock-icon svg{width:16px;height:16px}
+.cyber-shake{animation:cyberShake .35s ease}
+
+.foudex-loading-card{display:none;position:relative;margin:20px auto 0;width:min(390px,100%);padding:18px 18px 16px;border-radius:15px;border:1px solid rgba(35,136,255,.25);background:rgba(4,12,24,.74);box-shadow:0 0 35px rgba(35,136,255,.08);text-align:left;overflow:hidden}
+.foudex-loading-card.active{display:block;animation:loadingCardIn .3s ease}
+.foudex-loading-title{display:flex;align-items:center;gap:8px;color:#dff6ff;font-size:12px;font-weight:800;letter-spacing:.8px;margin-bottom:9px}.foudex-loading-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 1.2s infinite}
+.foudex-loading-file{font-size:11px;color:#8db9d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px}
+.foudex-progress-track{height:7px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.foudex-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));box-shadow:0 0 14px rgba(25,211,255,.4);transition:width .25s ease;position:relative}.foudex-progress-bar:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:loadingShine 1.2s linear infinite}
+.foudex-loading-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:10px;color:#71849a}.foudex-loading-percent{color:#9fe9ff;font-weight:800}.foudex-loading-squares{display:flex;gap:4px;margin-top:10px}.foudex-loading-squares span{width:5px;height:5px;border-radius:1px;background:var(--blue);opacity:.25;animation:loadingSquare 1s infinite}.foudex-loading-squares span:nth-child(2){animation-delay:.12s}.foudex-loading-squares span:nth-child(3){animation-delay:.24s}.foudex-loading-squares span:nth-child(4){animation-delay:.36s}.foudex-loading-squares span:nth-child(5){animation-delay:.48s}
+@keyframes cyberOverlayIn{from{opacity:0}to{opacity:1}}@keyframes cyberBoxIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes cyberOrbit{to{transform:rotate(360deg)}}@keyframes cyberScan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}@keyframes cyberShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}@keyframes loadingCardIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}@keyframes loadingShine{to{transform:translateX(100%)}}@keyframes loadingSquare{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+@media(max-width:520px){.cyber-access-box{padding:24px 18px 20px}.cyber-access-title{font-size:17px}.cyber-actions{flex-direction:row}.cyber-unlock-btn,.cyber-cancel-btn{padding:0 13px;font-size:11px}.foudex-loading-card{width:100%}}
+
 </style>
 </head>
 
 <body>
+
+
+<!-- =========================
+     FOUDEX SECURE ACCESS
+========================= -->
+<div id="cyberAccessOverlay" aria-hidden="true">
+    <div class="cyber-access-box" id="cyberAccessBox" role="dialog" aria-modal="true">
+        <div class="cyber-shield-wrap" aria-hidden="true">
+            <div class="cyber-orbit"></div>
+            <svg viewBox="0 0 80 92" fill="none">
+                <path d="M40 4L70 15V39C70 60 58 77 40 87C22 77 10 60 10 39V15L40 4Z" stroke="currentColor" stroke-width="2.5"/>
+                <path d="M40 12L62 20V39C62 54 54 66 40 75C26 66 18 54 18 39V20L40 12Z" stroke="currentColor" stroke-width="1" opacity=".45"/>
+                <path d="M28 43L36 51L53 32" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="cyber-access-title">FOUDEX SECURE ACCESS</div>
+        <div class="cyber-access-subtitle">Data Decryption &amp; Access Key</div>
+        <div class="cyber-file-name" id="cyberFileName">File will be selected after access is granted</div>
+        <div class="cyber-instruction">Enter the authorized security passkey to continue to file selection:</div>
+        <div class="cyber-password-wrap">
+            <div class="cyber-key-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="2"/><path d="M11 12L20 3M17 6L20 9M15 8L18 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <input type="password" id="cyberPasswordInput" placeholder="Enter security passkey" autocomplete="off">
+            <button type="button" class="cyber-eye-btn" id="cyberEyeBtn" title="Show password"><svg id="cyberEyeIcon" viewBox="0 0 24 24" fill="none"><path d="M2 12S5.5 5 12 5s10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg></button>
+        </div>
+        <div class="cyber-error" id="cyberError">Invalid security passkey</div>
+        <div class="cyber-actions">
+            <button type="button" class="cyber-unlock-btn" id="cyberUnlockBtn"><span class="cyber-unlock-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Unlock &amp; Proceed</button>
+            <button type="button" class="cyber-cancel-btn" id="cyberCancelBtn">Cancel</button>
+        </div>
+    </div>
+</div>
 
 <canvas id="networkCanvas"></canvas>
 <div class="bgGlow"></div>
@@ -1557,13 +1645,13 @@ td{
                 type="file"
                 id="fileInput"
                 hidden
-                accept=".csv,.xlsx,.xls,.tsv,.pdf,.json"
+                accept=".csv,.xlsx,.xls,.tsv,.pdf,.json,.parquet"
                 onchange="handleFile(this.files[0])"
             >
 
             <button
                 class="chooseBtn"
-                onclick="document.getElementById('fileInput').click()"
+                onclick="requestFoudexFileAccess()"
             >
                 Choose File
             </button>
@@ -1575,6 +1663,7 @@ td{
                 <span>TSV</span>
                 <span>PDF</span>
                 <span>JSON</span>
+                <span>PARQUET</span>
             </div>
 
             <div class="privacy">
@@ -1584,6 +1673,14 @@ td{
             <div class="loading" id="loading">
                 <span class="spinner"></span>
                 Analyzing your dataset...
+            </div>
+
+            <div class="foudex-loading-card" id="foudexLoadingCard">
+                <div class="foudex-loading-title"><span class="foudex-loading-dot"></span>FOUDEX DATA PROCESSING</div>
+                <div class="foudex-loading-file" id="foudexLoadingFile">Preparing file...</div>
+                <div class="foudex-progress-track"><div class="foudex-progress-bar" id="foudexProgressBar"></div></div>
+                <div class="foudex-loading-meta"><span id="foudexLoadingStatus">Preparing dataset...</span><span class="foudex-loading-percent" id="foudexLoadingPercent">0%</span></div>
+                <div class="foudex-loading-squares"><span></span><span></span><span></span><span></span><span></span></div>
             </div>
 
         </div>
@@ -2565,6 +2662,120 @@ resizeCanvas();
 createNodes();
 drawNetwork();
 
+
+/* =========================
+   FOUDEX FILE SECURITY
+   Change only this line.
+   Leave it empty to disable the password gateway.
+========================= */
+const FOUDEX_FILE_PASSWORD = "1234";
+
+const cyberOverlay = document.getElementById("cyberAccessOverlay");
+const cyberBox = document.getElementById("cyberAccessBox");
+const cyberPasswordInput = document.getElementById("cyberPasswordInput");
+const cyberUnlockBtn = document.getElementById("cyberUnlockBtn");
+const cyberCancelBtn = document.getElementById("cyberCancelBtn");
+const cyberEyeBtn = document.getElementById("cyberEyeBtn");
+const cyberError = document.getElementById("cyberError");
+const cyberFileName = document.getElementById("cyberFileName");
+const fileInput = document.getElementById("fileInput");
+let pendingFoudexFile = null;
+let pendingFoudexMode = "picker";
+
+function requestFoudexFileAccess(){
+    pendingFoudexMode="picker";
+    pendingFoudexFile=null;
+    if(!FOUDEX_FILE_PASSWORD){
+        fileInput.value="";
+        fileInput.click();
+        return;
+    }
+    openFoudexSecureAccess();
+}
+
+function openFoudexSecureAccess(file){
+    pendingFoudexFile=file||null;
+    pendingFoudexMode=file?"drop":"picker";
+    cyberFileName.textContent=file ? file.name : "File will be selected after access is granted";
+    cyberPasswordInput.value="";
+    cyberError.classList.remove("show");
+    cyberOverlay.classList.add("active");
+    cyberOverlay.setAttribute("aria-hidden","false");
+    setTimeout(()=>cyberPasswordInput.focus(),120);
+}
+
+function closeFoudexSecureAccess(){
+    cyberOverlay.classList.remove("active");
+    cyberOverlay.setAttribute("aria-hidden","true");
+    cyberPasswordInput.value="";
+    cyberError.classList.remove("show");
+    pendingFoudexFile=null;
+    pendingFoudexMode="picker";
+}
+
+function continueAfterFoudexAccess(){
+    const file=pendingFoudexFile;
+    const mode=pendingFoudexMode;
+    closeFoudexSecureAccess();
+    if(mode==="drop" && file){
+        handleFile(file);
+        return;
+    }
+    fileInput.value="";
+    fileInput.click();
+}
+
+cyberUnlockBtn.addEventListener("click",function(){
+    if(cyberPasswordInput.value===FOUDEX_FILE_PASSWORD){
+        cyberUnlockBtn.innerHTML='<span class="cyber-unlock-icon">🔓</span>Access Granted';
+        setTimeout(continueAfterFoudexAccess,350);
+    }else{
+        cyberError.classList.add("show");
+        cyberBox.classList.remove("cyber-shake");
+        void cyberBox.offsetWidth;
+        cyberBox.classList.add("cyber-shake");
+        cyberPasswordInput.value="";
+        cyberPasswordInput.focus();
+    }
+});
+
+cyberCancelBtn.addEventListener("click",closeFoudexSecureAccess);
+cyberEyeBtn.addEventListener("click",function(){
+    const show=cyberPasswordInput.type==="password";
+    cyberPasswordInput.type=show?"text":"password";
+    cyberEyeBtn.title=show?"Hide password":"Show password";
+});
+cyberPasswordInput.addEventListener("keydown",function(e){if(e.key==="Enter") cyberUnlockBtn.click();});
+cyberOverlay.addEventListener("click",function(e){if(e.target===cyberOverlay) closeFoudexSecureAccess();});
+
+function startFoudexLoading(fileName){
+    const card=document.getElementById("foudexLoadingCard");
+    const legacy=document.getElementById("loading");
+    if(legacy) legacy.style.display="none";
+    document.getElementById("foudexLoadingFile").textContent=fileName||"Dataset";
+    document.getElementById("foudexProgressBar").style.width="8%";
+    document.getElementById("foudexLoadingPercent").textContent="8%";
+    document.getElementById("foudexLoadingStatus").textContent="Reading file...";
+    card.classList.add("active");
+}
+
+function updateFoudexLoading(percent,status){
+    const bar=document.getElementById("foudexProgressBar");
+    const pct=document.getElementById("foudexLoadingPercent");
+    const label=document.getElementById("foudexLoadingStatus");
+    if(bar) bar.style.width=Math.max(0,Math.min(100,percent))+"%";
+    if(pct) pct.textContent=Math.round(Math.max(0,Math.min(100,percent)))+"%";
+    if(label && status) label.textContent=status;
+}
+
+function finishFoudexLoading(){
+    updateFoudexLoading(100,"Analysis complete");
+    setTimeout(()=>{
+        const card=document.getElementById("foudexLoadingCard");
+        if(card) card.classList.remove("active");
+    },260);
+}
+
 /* =========================
    FILE HANDLING
 ========================= */
@@ -2596,7 +2807,11 @@ function handleDrop(e){
     const file=e.dataTransfer.files[0];
 
     if(file){
-        handleFile(file);
+        if(!FOUDEX_FILE_PASSWORD){
+            handleFile(file);
+        }else{
+            openFoudexSecureAccess(file);
+        }
     }
 }
 
@@ -2606,27 +2821,32 @@ async function handleFile(file){
         return;
     }
 
+    startFoudexLoading(file.name);
+
     const extension=file.name
         .split(".")
         .pop()
         .toLowerCase();
 
-    if(!["csv","xlsx","xls","tsv","pdf","json"].includes(extension)){
+    if(!["csv","xlsx","xls","tsv","pdf","json","parquet"].includes(extension)){
 
         alert(
-            t("Unsupported file. Please upload XLSX, XLS, CSV, TSV, PDF or JSON.")
+            t("Unsupported file. Please upload XLSX, XLS, CSV, TSV, PDF, JSON or Parquet.")
         );
 
         return;
     }
 
-    document.getElementById("loading").style.display="block";
+    updateFoudexLoading(20,"Detecting file type...");
 
     try{
 
-        if(extension==="csv"){
+        if(extension==="csv" || extension==="tsv"){
 
+            updateFoudexLoading(35,extension==="tsv"?"Parsing TSV data...":"Parsing CSV data...");
             Papa.parse(file,{
+
+                delimiter:extension==="tsv"?"\t":undefined,
 
                 header:true,
                 skipEmptyLines:true,
@@ -2643,40 +2863,57 @@ async function handleFile(file){
 
                     alert(t("CSV error: ")+error.message);
 
-                    document.getElementById("loading")
-                        .style.display="none";
+                    document.getElementById("loading").style.display="none";
+                    document.getElementById("foudexLoadingCard").classList.remove("active");
                 }
 
             });
 
+        }else if(extension==="json"){
+
+            updateFoudexLoading(40,"Parsing JSON data...");
+            const text=await file.text();
+            const parsed=JSON.parse(text);
+            let data=[];
+            if(Array.isArray(parsed)) data=parsed;
+            else if(parsed && Array.isArray(parsed.data)) data=parsed.data;
+            else if(parsed && typeof parsed==="object") data=[parsed];
+            processDataset(data,file.name);
+
+        }else if(extension==="pdf"){
+
+            updateFoudexLoading(35,"Reading PDF document...");
+            const buffer=await file.arrayBuffer();
+            const pdf=await window.pdfjsLib.getDocument({data:buffer,disableWorker:true}).promise;
+            const data=[];
+            for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
+                const page=await pdf.getPage(pageNo);
+                const content=await page.getTextContent();
+                const text=content.items.map(item=>item.str).join(" ").trim();
+                if(text) data.push({Page:pageNo,Text:text});
+                updateFoudexLoading(35+(pageNo/pdf.numPages)*45,`Reading PDF page ${pageNo} of ${pdf.numPages}...`);
+            }
+            processDataset(data,file.name);
+
+        }else if(extension==="parquet"){
+
+            updateFoudexLoading(40,"Reading Parquet dataset...");
+            const {parquetReadObjects}=await import("https://cdn.jsdelivr.net/npm/hyparquet/src/hyparquet.min.js");
+            const fileBuffer=await file.arrayBuffer();
+            const data=await parquetReadObjects({file:fileBuffer});
+            processDataset(data,file.name);
+
         }else{
 
+            updateFoudexLoading(35,"Reading spreadsheet...");
             const buffer=await file.arrayBuffer();
-
-            const workbook=XLSX.read(
-                buffer,
-                {type:"array",cellDates:true}
-            );
-
-            const sheetName=
-                workbook.SheetNames[0];
-
-            const sheet=
-                workbook.Sheets[sheetName];
-
-            const data=
-                XLSX.utils.sheet_to_json(
-                    sheet,
-                    {
-                        defval:"",
-                        raw:true
-                    }
-                );
-
-            processDataset(
-                data,
-                file.name
-            );
+            updateFoudexLoading(55,"Analyzing workbook structure...");
+            const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
+            const sheetName=workbook.SheetNames[0];
+            const sheet=workbook.Sheets[sheetName];
+            const data=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:true});
+            updateFoudexLoading(82,"Preparing data analysis...");
+            processDataset(data,file.name);
         }
 
     }catch(error){
@@ -2688,8 +2925,8 @@ async function handleFile(file){
             error.message
         );
 
-        document.getElementById("loading")
-            .style.display="none";
+        document.getElementById("loading").style.display="none";
+        document.getElementById("foudexLoadingCard").classList.remove("active");
     }
 }
 
@@ -2731,10 +2968,13 @@ function processDataset(data,fileName){
     chartCategoryColumns=pickChartCategoryColumns();
     columnFilterSpecs=buildColumnFilterSpecs();
 
+    updateFoudexLoading(92,"Calculating statistics...");
     renderDateFilterControls();
+    updateFoudexLoading(96,"Building insights...");
     renderColumnFilters();
     applyDashboardFilters();
 
+    finishFoudexLoading();
     document.getElementById("loading")
         .style.display="none";
 
