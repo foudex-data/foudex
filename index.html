@@ -2668,7 +2668,7 @@ drawNetwork();
    Change only this line.
    Leave it empty to disable the password gateway.
 ========================= */
-const FOUDEX_FILE_PASSWORD = "123123";
+const FOUDEX_FILE_PASSWORD = "";
 
 const cyberOverlay = document.getElementById("cyberAccessOverlay");
 const cyberBox = document.getElementById("cyberAccessBox");
@@ -2694,6 +2694,18 @@ function requestFoudexFileAccess(){
 }
 
 function openFoudexSecureAccess(file){
+        if(!FOUDEX_FILE_PASSWORD){
+        if(file){
+            pendingFoudexFile=file;
+            pendingFoudexMode="drop";
+        } else {
+            pendingFoudexFile=null;
+            pendingFoudexMode="picker";
+            fileInput.value="";
+            fileInput.click();
+        }
+        return;
+    }
     pendingFoudexFile=file||null;
     pendingFoudexMode=file?"drop":"picker";
     cyberFileName.textContent=file ? file.name : "File will be selected after access is granted";
